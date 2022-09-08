@@ -42,7 +42,8 @@ db_drop_and_create_all()
         or appropriate status code indicating reason for failure
 '''
 @app.route('/drinks')
-def get_drinks():
+@requires_auth('get:drinks')
+def get_drinks(payload):
     try:
         drinks = Drink.query.all()
         drinks = [drink.short() for drink in drinks]
@@ -62,7 +63,8 @@ def get_drinks():
         or appropriate status code indicating reason for failure
 '''
 @app.route('/drinks-detail')
-def drinks_detail():
+@requires_auth('get:drinks-detail')
+def drinks_detail(payload):
     try:
         drinks = Drink.query.all()
         drinks = [drink.long() for drink in drinks]
@@ -84,7 +86,8 @@ def drinks_detail():
         or appropriate status code indicating reason for failure
 '''
 @app.route('/drinks', methods=['POST'])
-def create_drink():
+@requires_auth('post:drinks')
+def create_drink(payload):
     try:
         data = request.get_json()
         title = data.get('title', None)
@@ -115,7 +118,8 @@ def create_drink():
         or appropriate status code indicating reason for failure
 '''
 @app.route('/drinks/<int:drink_id>', methods=['PATCH'])
-def update_drink(drink_id):
+@requires_auth('patch:drinks')
+def update_drink(payload, drink_id):
     try:
         drink = Drink.query.get(drink_id)
         if drink is None:
@@ -149,7 +153,8 @@ def update_drink(drink_id):
         or appropriate status code indicating reason for failure
 '''
 @app.route('/drinks/<int:drink_id>', methods=['DELETE'])
-def delete_drink(drink_id):
+@requires_auth('delete:drinks')
+def delete_drink(payload, drink_id):
     drink = Drink.query.get(drink_id)
     if not drink:
         abort(404)
@@ -209,7 +214,22 @@ def server_error(error):
         "error": 405,
         "message": "Method not allowed"
         }), 405
-
+    
+@app.errorhandler(401)
+def unauthorized(error):
+    return (jsonify({
+        "success": False,
+        "error": 401,
+        "message": "Unauthorized"
+    }), 401, )
+    
+@app.errorhandler(403)
+def forbidden(error):
+    return (jsonify({
+        "success": False,
+        "error": 403,
+        "message": "Permission not granted"
+    }), 403, )
 
 '''
 @TODO implement error handler for 404
@@ -229,21 +249,17 @@ def not_found(error):
     error handler should conform to general task above
 '''
 
-@app.errorhandler(401)
-def unauthorized(error):
-    return (jsonify({
+
+@app.errorhandler(AuthError)
+def auth_error(error):
+    print(error)
+    return jsonify({
         "success": False,
-        "error": 401,
-        "message": "Unauthorized"
-    }), 401, )
-    
-@app.errorhandler(403)
-def forbidden(error):
-    return (jsonify({
-        "success": False,
-        "error": 403,
-        "message": "Permission not granted"
-    }), 403, )
+        "error": error.status_code,
+        "message": error.error['description']
+    }), error.status_code
 
 
-app.run()
+if __name__ == "__main__":
+    app.debug = True
+    app.run()
