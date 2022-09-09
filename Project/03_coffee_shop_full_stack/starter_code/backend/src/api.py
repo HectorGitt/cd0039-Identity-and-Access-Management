@@ -221,23 +221,7 @@ def server_error(error):
         "error": 405,
         "message": "Method not allowed"
         }), 405
-    
-@app.errorhandler(401)
-def unauthorized(error):
-    return (jsonify({
-        "success": False,
-        "error": 401,
-        "message": "Unauthorized"
-    }), 401, )
-    
-@app.errorhandler(403)
-def forbidden(error):
-    return (jsonify({
-        "success": False,
-        "error": 403,
-        "message": "Permission not granted"
-    }), 403, )
-
+       
 '''
 @TODO implement error handler for 404
     error handler should conform to general task above
