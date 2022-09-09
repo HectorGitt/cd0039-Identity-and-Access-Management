@@ -43,6 +43,7 @@ db_drop_and_create_all()
 '''
 @app.route('/drinks')
 def get_drinks():
+    #return all drinks with short() data representation
     try:
         drinks = Drink.query.all()
         drinks = [drink.short() for drink in drinks]
@@ -64,6 +65,7 @@ def get_drinks():
 @app.route('/drinks-detail')
 @requires_auth('get:drinks-detail')
 def drinks_detail(payload):
+    #return all drinks with long() data representation
     try:
         drinks = Drink.query.all()
         drinks = [drink.long() for drink in drinks]
@@ -87,10 +89,12 @@ def drinks_detail(payload):
 @app.route('/drinks', methods=['POST'])
 @requires_auth('post:drinks')
 def create_drink(payload):
+    #create a new drink
     try:
         data = request.get_json()
         title = data.get('title', None)
         recipe = data.get('recipe', None)
+        #check if title and recipe are provided
         if not title or not recipe:
             abort(400)
         drink = Drink(title=title, recipe=json.dumps(recipe))
@@ -100,6 +104,7 @@ def create_drink(payload):
             'drinks': [drink.long()]
         }),200
     except IntegrityError:
+        #if drink already exists
         abort(422)
     except BaseException:
         abort(400)
@@ -126,6 +131,7 @@ def update_drink(payload, drink_id):
         data = request.get_json()
         title = data.get('title')
         recipe = data.get('recipe')
+        #check if title and recipe are provided
         if title is not None:
             drink.title = title
         if recipe is not None:
@@ -136,6 +142,7 @@ def update_drink(payload, drink_id):
             'drinks': [drink.long()]
         }), 200
     except IntegrityError:
+        #if drink title already exists
         abort(422)
     except BaseException:
         abort(400)
@@ -155,6 +162,7 @@ def update_drink(payload, drink_id):
 @requires_auth('delete:drinks')
 def delete_drink(payload, drink_id):
     drink = Drink.query.get(drink_id)
+    #check if drink exists
     if not drink:
         abort(404)
     drink.delete()
